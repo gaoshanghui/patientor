@@ -6,12 +6,13 @@ import { Patient } from '../types';
 
 import { apiBaseUrl } from '../constants';
 
-import { useStateValue, setPatient } from '../state';
+import { useStateValue, setPatient, setDiagnoses } from '../state';
 
 const PatientInfoPage = () => {
   const { id } = useParams<{ id: string }>();
 
-  const [{ patient }, dispatch] = useStateValue();
+  const [{ patient, diagnoses }, dispatch] = useStateValue();
+  console.log('diagnoses: ', diagnoses);
 
   useEffect(() => {
     const fetchPatientInformation = async () => {
@@ -25,7 +26,17 @@ const PatientInfoPage = () => {
       }
     };
 
+    const fetchDiagnosesData = async () => {
+      try {
+        const response = await axios.get(`${apiBaseUrl}/diagnoses/`);
+        dispatch(setDiagnoses(response.data));
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
+
     void fetchPatientInformation();
+    void fetchDiagnosesData();
   }, [dispatch]);
 
   return (
@@ -42,6 +53,29 @@ const PatientInfoPage = () => {
       <div>
         <span>occupation: </span>
         {patient.occupation}
+      </div>
+      <hr />
+      <div>
+        <h3>entries</h3>
+        {patient.entries.map((entry) => {
+          return (
+            <div key={entry.id}>
+              <p>{entry.date}</p>
+              <p>{entry.description}</p>
+              <ul>
+                {entry.diagnosisCodes?.map((code) => (
+                  <li key={code}>
+                    {code}{' '}
+                    {
+                      diagnoses?.find((diagnosis) => diagnosis.code === code)
+                        ?.name
+                    }
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
